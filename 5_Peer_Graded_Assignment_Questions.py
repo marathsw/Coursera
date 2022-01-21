@@ -26,9 +26,7 @@ airline_data =  pd.read_csv('https://cf-courses-data.s3.us.cloud-object-storage.
 year_list = [i for i in range(2005, 2021, 1)]
 
 """Compute graph data for creating yearly airline performance report 
-
 Function that takes airline data as input and create 5 dataframes based on the grouping condition to be used for plottling charts and grphs.
-
 Argument:
      
     df: Filtered dataframe
@@ -51,9 +49,7 @@ def compute_data_choice_1(df):
 
 
 """Compute graph data for creating yearly airline delay report
-
 This function takes in airline data and selected year as an input and performs computation for creating charts and plots.
-
 Arguments:
     df: Input airline data.
     
@@ -71,26 +67,33 @@ def compute_data_choice_2(df):
 
 
 # Application layout
-app.layout = html.Div(children=[ 
-                                # TASK1: Add title to the dashboard
-                                # Enter your code below. Make sure you have correct formatting.
-    
+app.layout = (html.Div(children=[ 
+                                # TODO1: Add title to the dashboard
+                                html.H1('US Domestic Airline Flights Performance',
+                                        style={'text-align-last':'centre','color':'#503D36','font-size':24}
+                                       ),
                                 # REVIEW2: Dropdown creation
                                 # Create an outer division 
                                 html.Div([
                                     # Add an division
                                     html.Div([
-                                        # Create an division for adding dropdown helper text for report type
+                                        # Create an division for adding dropdown helper text for report type   
                                         html.Div(
                                             [
-                                            html.H2('Report Type:', style={'margin-right': '2em'}),
+                                            html.H2('Report Type:', style={'margin-right': '2em'})
                                             ]
                                         ),
-                                        # TASK2: Add a dropdown
-                                        # Enter your code below. Make sure you have correct formatting.
-                                        
+                                        # TODO2: Add a dropdown
+                                        dcc.Dropdown(id='input-type',
+                                                     options=[
+                                                              {'label': 'Yearly Airline Performance Report', 'value': 'OPT1'},
+                                                              {'label': 'Yearly Airline Delay Report', 'value': 'OPT2'}
+                                                             ],
+                                                     placeholder='Select a report type',
+                                                     style={'width':'80%', 'padding':'3px', 'font-size':'20px', 'text-align-last':'center'}
+                                                    )
                                     # Place them next to each other using the division style
-                                    ], style={'display':'flex'}),
+                                            ], style={'display':'flex'}),
                                     
                                    # Add next division 
                                    html.Div([
@@ -106,7 +109,7 @@ app.layout = html.Div(children=[
                                                      placeholder="Select a year",
                                                      style={'width':'80%', 'padding':'3px', 'font-size': '20px', 'text-align-last' : 'center'}),
                                             # Place them next to each other using the division style
-                                            ], style={'display': 'flex'}),  
+                                            ], style={'display': 'flex'})  
                                           ]),
                                 
                                 # Add Computed graphs
@@ -114,14 +117,20 @@ app.layout = html.Div(children=[
                                 html.Div([ ], id='plot1'),
     
                                 html.Div([
-                                        html.Div([ ], id='plot2'),
-                                        html.Div([ ], id='plot3')
-                                ], style={'display': 'flex'}),
+                                          html.Div([ ], id='plot2'),
+                                          html.Div([ ], id='plot3')
+                                         ], 
+                                          style={'display': 'flex'}),
                                 
-                                # TASK3: Add a division with two empty divisions inside. See above disvision for example.
-                                # Enter your code below. Make sure you have correct formatting.
-                               
+                                # TODO3: Add a division with two empty divisions inside. See above disvision for example.
+                                html.Div([
+                                          html.Div([ ], id='plot4'),
+                                          html.Div([ ], id='plot5')
+                                         ], 
+                                          style={'display': 'flex'})
                                 ])
+             )
+
 
 # Callback function definition
 # TASK4: Add 5 ouput components
@@ -144,24 +153,24 @@ app.layout = html.Div(children=[
                ])
 # Add computation to callback function and return graph
 def get_graph(chart, year, children1, children2, c3, c4, c5):
-      
+
         # Select data
         df =  airline_data[airline_data['Year']==int(year)]
-       
+
         if chart == 'OPT1':
             # Compute required information for creating graph from the data
             bar_data, line_data, div_data, map_data, tree_data = compute_data_choice_1(df)
-            
+
             # Number of flights under different cancellation categories
             bar_fig = px.bar(bar_data, x='Month', y='Flights', color='CancellationCode', title='Monthly Flight Cancellation')
-            
+
             # TASK5: Average flight time by reporting airline
             # Enter your code below. Make sure you have correct formatting.
-            
-            
+            line_fig = px.line(line_data, x='Month', y='AirTime', color='Reporting_Airline', title='Average monthly flight time (minutes) by airline')
+
             # Percentage of diverted airport landings per reporting airline
             pie_fig = px.pie(div_data, values='Flights', names='Reporting_Airline', title='% of flights by reporting airline')
-            
+
             # REVIEW5: Number of flights flying from each state using choropleth
             map_fig = px.choropleth(map_data,  # Input data
                     locations='OriginState', 
@@ -173,12 +182,17 @@ def get_graph(chart, year, children1, children2, c3, c4, c5):
             map_fig.update_layout(
                     title_text = 'Number of flights from origin state', 
                     geo_scope='usa') # Plot only the USA instead of globe
-            
+
             # TASK6: Number of flights flying to each state from each reporting airline
             # Enter your code below. Make sure you have correct formatting.
-            
-            
-            
+
+            tree_fig = px.treemap(tree_data, path=['DestState', 'Reporting_Airline'], 
+                      values='Flights',
+                      color='Flights',
+                      color_continuous_scale='RdBu',
+                      title='Flight count by airline to destination state'
+                )
+
             # REVIEW6: Return dcc.Graph component to the empty division
             return [dcc.Graph(figure=tree_fig), 
                     dcc.Graph(figure=pie_fig),
@@ -190,14 +204,14 @@ def get_graph(chart, year, children1, children2, c3, c4, c5):
             # REVIEW7: This covers chart type 2 and we have completed this exercise under Flight Delay Time Statistics Dashboard section
             # Compute required information for creating graph from the data
             avg_car, avg_weather, avg_NAS, avg_sec, avg_late = compute_data_choice_2(df)
-            
+
             # Create graph
             carrier_fig = px.line(avg_car, x='Month', y='CarrierDelay', color='Reporting_Airline', title='Average carrrier delay time (minutes) by airline')
             weather_fig = px.line(avg_weather, x='Month', y='WeatherDelay', color='Reporting_Airline', title='Average weather delay time (minutes) by airline')
             nas_fig = px.line(avg_NAS, x='Month', y='NASDelay', color='Reporting_Airline', title='Average NAS delay time (minutes) by airline')
             sec_fig = px.line(avg_sec, x='Month', y='SecurityDelay', color='Reporting_Airline', title='Average security delay time (minutes) by airline')
             late_fig = px.line(avg_late, x='Month', y='LateAircraftDelay', color='Reporting_Airline', title='Average late aircraft delay time (minutes) by airline')
-            
+
             return[dcc.Graph(figure=carrier_fig), 
                    dcc.Graph(figure=weather_fig), 
                    dcc.Graph(figure=nas_fig), 
@@ -208,3 +222,4 @@ def get_graph(chart, year, children1, children2, c3, c4, c5):
 # Run the app
 if __name__ == '__main__':
     app.run_server()
+fig.show()
